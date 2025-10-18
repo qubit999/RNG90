@@ -14,6 +14,20 @@ MIT License
 - Compatible with standard Arduino platforms and ATTiny microcontrollers
 - Supports Raspberry Pi Pico and other RP2040/RP2350-based boards
 
+## Important Notice
+
+> **⚠️ Hardware Requirement**: This library requires the Microchip RNG90 hardware random number generator IC.
+
+**Source:** https://eu.mouser.com/new/microchip/microchip-rng90-cryptoauthentication/
+
+### RNG90 Pin Configuration
+
+![RNG90 Pin Configuration](RNG90_Pin.jpeg)
+
+### Example Circuit
+
+![RNG90 Example Circuit](RNG90_Example_Circuit.jpeg)
+
 ## Features
 
 ### Core RNG90 Functionality
