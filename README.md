@@ -2,6 +2,12 @@
 
 A comprehensive Arduino library for interfacing with the RNG90 hardware random number generator via I2C communication. This library provides secure random number generation capabilities for embedded projects.
 
+## Author
+**Alexander Slatina**
+
+## License
+MIT License
+
 ## Platform Compatibility
 - Built for use with Arduino SDK
 - **Recommended**: PlatformIO for VS Code
@@ -107,6 +113,40 @@ Get the last error status.
 - `WAKE_SUCCESS (0x11)`: Device wake successful
 - `COMM_ERROR (0xFF)`: Communication error
 
+### RandomStringGenerator Class
+
+#### Constructor
+```cpp
+RandomStringGenerator(RNG90& rngDevice)
+```
+Initialize with a reference to an RNG90 instance.
+
+#### String Generation Methods
+```cpp
+String generateRandomString(size_t length)
+```
+Generate a random string of specified length using the default character set (alphanumeric + special characters).
+
+```cpp
+String generateString(size_t length, const char* charset)
+```
+Generate a random string of specified length using a custom character set.
+
+**Parameters:**
+- `length`: Number of characters to generate
+- `charset`: Custom character set string (e.g., "0123456789" for digits only)
+
+#### Utility Methods
+```cpp
+void refreshRandomData()
+```
+Manually refresh the internal 32-byte random data buffer from the RNG90 device.
+
+```cpp
+char getRandomCharUnbiased(uint8_t* randomData, size_t& index, const char* charset)
+```
+Get a single unbiased random character from the charset using rejection sampling.
+
 ## Technical Details
 
 ### Communication Protocol
@@ -125,9 +165,87 @@ Get the last error status.
 - **Wake Time**: ~5ms typical wake-up time
 - **I2C Standby**: Device responds to I2C even in sleep mode
 
-## Usage example
+## Usage Examples
 
-### main.cpp
+### Basic Random Number Generation
+```cpp
+#include <Arduino.h>
+#include <Wire.h>
+#include <RNG90.h>
+
+RNG90 rng;
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) delay(10);
+  
+  // Initialize I2C (SDA=GPIO16, SCL=GPIO17 for Pico)
+  rng.begin(16, 17);
+  
+  // Wake the device
+  if (rng.wake() == RNG90::WAKE_SUCCESS) {
+    Serial.println("RNG90 ready!");
+    
+    // Get device info
+    uint8_t rev[4];
+    if (rng.info(rev) == RNG90::SUCCESS) {
+      Serial.printf("Firmware: %02X.%02X.%02X.%02X\n", 
+                   rev[0], rev[1], rev[2], rev[3]);
+    }
+  }
+}
+
+void loop() {
+  uint8_t randomBytes[32];
+  
+  if (rng.random(randomBytes) == RNG90::SUCCESS) {
+    Serial.print("Random data: ");
+    for (int i = 0; i < 32; i++) {
+      Serial.printf("%02X ", randomBytes[i]);
+    }
+    Serial.println();
+  }
+  
+  delay(1000);
+}
+```
+
+### Random String Generation
+```cpp
+#include <Arduino.h>
+#include <Wire.h>
+#include <RNG90.h>
+#include <RNGString.h>
+
+RNG90 rng;
+RandomStringGenerator rngStr(rng);
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) delay(10);
+  
+  rng.begin(16, 17);
+  rng.wake();
+}
+
+void loop() {
+  // Generate a 16-character password
+  String password = rngStr.generateRandomString(16);
+  Serial.println("Password: " + password);
+  
+  // Generate a 6-digit PIN
+  String pin = rngStr.generateString(6, "0123456789");
+  Serial.println("PIN: " + pin);
+  
+  // Generate hex string
+  String hex = rngStr.generateString(8, "0123456789ABCDEF");
+  Serial.println("Hex: " + hex);
+  
+  delay(2000);
+}
+```
+
+### Complete Example with SD Card (Raspberry Pi Pico)
 ```cpp
 #include <Arduino.h>
 #include <Wire.h>
